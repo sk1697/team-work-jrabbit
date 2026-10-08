@@ -1,0 +1,29 @@
+name: FIR 배포 후보 만들기
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-exe:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m venv .venv
+      - run: .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller==6.22.3
+      - run: .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+      - run: ./scripts/build-fir-exe.ps1
+      - name: EXE의 실제 GUI·MCP 실행 검사
+        run: .\.venv\Scripts\python.exe scripts/verify-fir-exe.py
+      - name: 파일 해시와 소스 commit 기록
+        run: |
+          Get-FileHash docs/downloads/fir-tuner.exe -Algorithm SHA256 | Format-List | Out-File docs/downloads/SHA256.txt
+          "$env:GITHUB_SHA" | Out-File docs/downloads/COMMIT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fir-windows-${{ github.sha }}
+          path: docs/downloads/
+          if-no-files-found: error

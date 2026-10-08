@@ -1,0 +1,24 @@
+name: FIR 기능·PR 검사
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  merge_group:
+permissions:
+  contents: read
+jobs:
+  pr-gate:
+    name: pr-gate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: 새 기능과 기존 기능 검사
+        run: python -m unittest discover -s tests -v
+      - name: PR 필수 기록 확인
+        if: github.event_name == 'pull_request'
+        run: python scripts/check_pr.py "$env:GITHUB_EVENT_PATH"

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.fir-runtime/
+workshop/reports/
+build/
+docs/downloads/
